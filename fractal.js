@@ -1,4 +1,4 @@
-frameRate(4);
+frameRate(10);
 
 var maxLevels = 6;
 var margin = 100;
@@ -134,23 +134,36 @@ var getNextLevelKochLines = function (liney) {
 
 var currentLines = lines;
 var timesClicked = 0;
+var nextLevelLines = [];
+var calculatingNextLevel = false;
+var needToDraw = true;
 
-var makeItMorePointy = function () {
+var computeNextKochLevel = function () {
+    calculatingNextLevel = true;
     timesClicked = (timesClicked + 1) % maxLevels;
     if (timesClicked > 0) {
-        var nextLevelLines = [];
+        nextLevelLines = [];
         for (var i = 0; i < currentLines.length; i++) {
             var l = currentLines[i];
             var kochLines = getNextLevelKochLines(l);
             nextLevelLines.push.apply(nextLevelLines, kochLines);
         }
-        currentLines = nextLevelLines;
     } else {
-        currentLines = lines;
+        nextLevelLines = lines;
+    }
+    calculatingNextLevel = false;
+};
+computeNextKochLevel();
+
+var advanceToNextKochLevel = function () {
+    if (!calculatingNextLevel) {
+        currentLines = nextLevelLines;
+        computeNextKochLevel();
+        needToDraw = true;
     }
 };
 
-mouseClicked = makeItMorePointy;
+mouseClicked = advanceToNextKochLevel;
 
 var drawLine = function (liney) {
     // Draw the line `liney` with the correct color.
@@ -171,6 +184,8 @@ var resetState = function () {
 
 var draw = function () {
     // Erases and draws our snowflake.  Called several times per second.
+    if (!needToDraw) { return; }
+
     resetState();
     stroke(0, 0, 0);
 
@@ -182,4 +197,5 @@ var draw = function () {
         l = rotateLineAboutCenter(l, tCenter, 120);
         drawLine(l);
     }
+    needToDraw = false;
 };
