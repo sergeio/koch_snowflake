@@ -105,6 +105,7 @@ var midpoint = function (p1, p2) {
 var getNextLevelKochLines = function (liney) {
     // Turn a line ____ into 4 segments _/\_ that are the next level Koch form.
     // Return a list of the 4 segments.
+    // Points 1, 2, 3 are the new segment boundaries as shown here:_./'\._
     var point1X = liney.p1.x * 2 / 3 + liney.p2.x / 3;
     var point1Y = liney.p1.y * 2 / 3 + liney.p2.y / 3;
     var newPoint1 = new PVector(point1X, point1Y);
