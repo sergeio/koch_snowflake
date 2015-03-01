@@ -1,6 +1,8 @@
 frameRate(4);
 
 var maxLevels = 6;
+var margin = 100;
+var tSide = 200;
 
 var currentColorIndex = 0;
 var colors = [
@@ -23,12 +25,6 @@ var baseHeightEquilateral = function (sideLength) {
     return sqrt(3 / 4 * sideLength * sideLength);
 };
 
-var average = function (x1, x2) {
-    return (x1 + x2) / 2;
-};
-
-var margin = 100;
-var tSide = 200;
 var tBase = baseHeightEquilateral(tSide);
 var tBaseLevel2 = baseHeightEquilateral(tSide / 3);
 var line1 = {
@@ -38,31 +34,20 @@ var line1 = {
     y2: margin,
     xNext: margin + tSide / 2,
     yNext: margin - baseHeightEquilateral(tSide / 3),
-    //appearance: color(28, 79, 232),
     appearance: getNextColor(),
 };
 var lines = [line1];
 
-var triangleCenter = function (pointy) {
+var triangleCenter = function (liney) {
     // Get the center of our specific triangle.
     // Could be used to inscribe a circle.
     // Will not work for every triangle.
-    var midX = (pointy.x1 + pointy.x2) / 2;
-    var midY = pointy.y1 + tSide * sqrt(3) / 6;
+    var midX = (liney.x1 + liney.x2) / 2;
+    var midY = liney.y1 + tSide * sqrt(3) / 6;
     return {x: midX, y: midY};
 };
 
 var tCenter = triangleCenter(line1);
-
-var resetState = function () {
-    // Resets the state of the canvas and color index for next frame.
-    noStroke();
-    fill(7, 15, 4);
-    rect(0, 0, width, height);
-    noFill();
-    stroke(0, 0, 0);
-    currentColorIndex = 1;
-};
 
 var myRotate = function (x1, y1, centerX, centerY, degrees) {
     // Rotate the point (x1, y1) 120 degrees around (centerX, centerY)
@@ -75,17 +60,17 @@ var myRotate = function (x1, y1, centerX, centerY, degrees) {
     return {x: x2, y: y2};
 };
 
-var rotateLine = function (pointy, center, degrees) {
-    // Rotate pointy about the center of the triangle
+var rotateLine = function (liney, center, degrees) {
+    // Rotate liney about the center of the triangle
     // Return a line object with fields x1, x2, y1, y2, xNext, yNext
-    var rotated1 = myRotate(pointy.x1, pointy.y1, center.x, center.y, degrees);
-    var rotated2 = myRotate(pointy.x2, pointy.y2, center.x, center.y, degrees);
-    var rotatedNext = myRotate(pointy.xNext, pointy.yNext, center.x, center.y, degrees);
+    var rotated1 = myRotate(liney.x1, liney.y1, center.x, center.y, degrees);
+    var rotated2 = myRotate(liney.x2, liney.y2, center.x, center.y, degrees);
+    var rotatedNext = myRotate(liney.xNext, liney.yNext, center.x, center.y, degrees);
     var rotatedLine = {
         x1: rotated1.x, y1: rotated1.y,
         x2: rotated2.x, y2: rotated2.y,
         xNext: rotatedNext.x, yNext: rotatedNext.y,
-        appearance: pointy.appearance,
+        appearance: liney.appearance,
     };
     return rotatedLine;
 
@@ -93,31 +78,31 @@ var rotateLine = function (pointy, center, degrees) {
 
 var midpoint = function (p1, p2) {
     // Returns the point halfway between p1 and p2
-    return new PVector(average(p1.x, p2.x), average(p1.y, p2.y));
+    return new PVector((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 };
 
-var getNextLevelKochLines = function (pointy) {
+var getNextLevelKochLines = function (liney) {
     // Turn a line ____ into 4 segments _/\_ that are the next level Koch form.
-    var point1X = pointy.x1 * 2 / 3 + pointy.x2 / 3;
-    var point1Y = pointy.y1 * 2 / 3 + pointy.y2 / 3;
-    // Point2 is (pointy.xNext, pointy.yNext)
-    var point3X = pointy.x1 / 3 + pointy.x2 * 2 / 3;
-    var point3Y = pointy.y1 / 3 + pointy.y2 * 2 / 3;
+    var point1X = liney.x1 * 2 / 3 + liney.x2 / 3;
+    var point1Y = liney.y1 * 2 / 3 + liney.y2 / 3;
+    // Point2 is (liney.xNext, liney.yNext)
+    var point3X = liney.x1 / 3 + liney.x2 * 2 / 3;
+    var point3Y = liney.y1 / 3 + liney.y2 * 2 / 3;
     var newColor = getNextColor();
 
     var segment1 = {
-        x1: pointy.x1,
-        y1: pointy.y1,
+        x1: liney.x1,
+        y1: liney.y1,
         x2: point1X,
         y2: point1Y,
-        appearance: pointy.appearance,
+        appearance: liney.appearance,
     };
 
     var segment2 = {
         x1: segment1.x2,
         y1: segment1.y2,
-        x2: pointy.xNext,
-        y2: pointy.yNext,
+        x2: liney.xNext,
+        y2: liney.yNext,
         appearance: newColor,
     };
     var segment3 = {
@@ -130,16 +115,16 @@ var getNextLevelKochLines = function (pointy) {
     var segment4 = {
         x1: segment3.x2,
         y1: segment3.y2,
-        x2: pointy.x2,
-        y2: pointy.y2,
-        appearance: pointy.appearance,
+        x2: liney.x2,
+        y2: liney.y2,
+        appearance: liney.appearance,
     };
 
-    var p1 = new PVector(pointy.x1, pointy.y1);
-    var p2 = new PVector(pointy.x2, pointy.y2);
+    var p1 = new PVector(liney.x1, liney.y1);
+    var p2 = new PVector(liney.x2, liney.y2);
     var pp1 = new PVector(point1X, point1Y);
     var pp3 = new PVector(point3X, point3Y);
-    var pNext = new PVector(pointy.xNext, pointy.yNext);
+    var pNext = new PVector(liney.xNext, liney.yNext);
 
     var midpointWholeLine = midpoint(p1, p2);
     var vector = new PVector(pNext.x, pNext.y);
@@ -188,12 +173,25 @@ var makeItMorePointy = function () {
 
 mouseClicked = makeItMorePointy;
 
-var drawLine = function (pointy) {
-    stroke(pointy.appearance);
-    line(pointy.x1, pointy.y1, pointy.x2, pointy.y2);
+var drawLine = function (liney) {
+    // Draw the line `liney` with the correct color.
+    stroke(liney.appearance);
+    line(liney.x1, liney.y1, liney.x2, liney.y2);
     stroke(0, 0, 0);
 };
+
+var resetState = function () {
+    // Resets the state of the canvas and color index for next frame.
+    noStroke();
+    fill(7, 15, 4);
+    rect(0, 0, width, height);
+    noFill();
+    stroke(0, 0, 0);
+    currentColorIndex = 1;
+};
+
 var draw = function () {
+    // Erases and draws our snowflake.  Called several times per second.
     resetState();
     stroke(0, 0, 0);
 
