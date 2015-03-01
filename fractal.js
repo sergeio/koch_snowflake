@@ -47,6 +47,8 @@ var baseHeightEquilateral = function (sideLength) {
 };
 
 // The line that will be duplicated and rotated to make our initial triangle.
+// p1 and p2 are the endpoints, pNext is the tip of the next "bump" we'll add
+// to this line, and appearance is the color of the line.
 var line1 = {
     p1: new PVector(margin, margin),
     p2: new PVector(margin + tSize, margin),
