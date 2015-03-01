@@ -16,8 +16,6 @@
  *
  *****************************************************************************/
 
-frameRate(3);
-
 var maxLevels = 6;
 var tSize = 200;  // <--- Try changing me to 400!
 var margin = 100;
@@ -53,6 +51,12 @@ var line1 = {
 var lines = [line1];
 var originalPerimeter = tSize * 3;
 var originalArea = 0.5 * tSize * baseHeightEquilateral(tSize);
+// There is no actual maximum perimeter, but this the max we will reach.
+var maxPerimeter = originalPerimeter * pow(4/3, maxLevels - 1);
+var maxArea = originalArea;
+for (var i = 1; i < maxLevels; i++) {
+    maxArea = 3 / 4 * pow(4 / 9, i) * originalArea + maxArea;
+}
 
 var triangleCenter = function () {
     // Get the center of our specific triangle.  Depends on global state.
@@ -67,8 +71,6 @@ var tCenter = triangleCenter();
 
 var rotateAboutCenter = function (p, pCenter, degrees) {
     // Rotate the point p around pCenter the specified amount of degrees.
-    // var pNew = p.get();
-    //
     var pNew = new PVector(p.x, p.y);
     pNew.sub(pCenter);
     pNew.rotate(degrees);
@@ -95,6 +97,7 @@ var midpoint = function (p1, p2) {
 
 var getNextLevelKochLines = function (liney) {
     // Turn a line ____ into 4 segments _/\_ that are the next level Koch form.
+    // Return a list of the 4 segments.
     var point1X = liney.p1.x * 2 / 3 + liney.p2.x / 3;
     var point1Y = liney.p1.y * 2 / 3 + liney.p2.y / 3;
     var newPoint1 = new PVector(point1X, point1Y);
@@ -152,41 +155,82 @@ var currentLines = lines;
 var level = 0;
 var currentPerimeter = originalPerimeter;
 var currentArea = originalArea;
+var areaData = [currentArea];
+var perimeterData = [currentPerimeter];
 
 var computeNextKochLevel = function () {
     // Calculate the set of lines that will be shown next time the user clicks.
-    level = (level + 1) % maxLevels;
     var nextLevelLines = [];
-    if (level > 0) {
-        for (var i = 0; i < currentLines.length; i++) {
-            var l = currentLines[i];
-            var kochLines = getNextLevelKochLines(l);
-            nextLevelLines.push.apply(nextLevelLines, kochLines);
-        }
-        currentLines = nextLevelLines;
-        currentPerimeter = 4 * currentPerimeter / 3;
-        var newArea = 7 / 4 * pow(4 / 9, level) * originalArea;
-        currentArea = currentArea + newArea;
-    } else {
-        currentLines = lines;
-        currentPerimeter = originalPerimeter;
-        currentArea = originalArea;
+    for (var i = 0; i < currentLines.length; i++) {
+        var l = currentLines[i];
+        var kochLines = getNextLevelKochLines(l);
+        nextLevelLines.push.apply(nextLevelLines, kochLines);
     }
+    currentLines = nextLevelLines;
 };
 
-mouseClicked = computeNextKochLevel;
+var updateStats = function () {
+    // Increment our perimeter and area stats.
+    currentPerimeter = 4 * currentPerimeter / 3;
+    perimeterData.push(currentPerimeter);
+    currentArea = 3 / 4 * pow(4 / 9, level) * originalArea + currentArea;
+    areaData.push(currentArea);
+};
+
+var resetStats = function () {
+    // Reset stats so that we are drawing the original triangle again.
+    currentLines = lines;
+    currentPerimeter = originalPerimeter;
+    currentArea = originalArea;
+    areaData = [originalArea];
+    perimeterData = [originalPerimeter];
+};
 
 var drawLine = function (liney) {
-    // Draw the line `liney` with the correct color.
+    // Draw line liney with the correct color.
     stroke(liney.appearance);
     line(liney.p1.x, liney.p1.y, liney.p2.x, liney.p2.y);
     stroke(0, 0, 0);
 };
 
+var maxBarHeight = 15;
+var drawGraph = function (x, y, data, maxOfData) {
+    // Graph the data at the specified coordinates.
+    noStroke();
+    fill(0, 0, 0);
+    rect(x - 3, y - 15, 11 * data.length, maxBarHeight);
+    for (var i = 0; i < data.length; i++) {
+        var barHeight = maxBarHeight * data[i] / maxOfData;
+        fill(150, 150, 150);
+        rect(x, y - 15 + maxBarHeight - barHeight, 5, barHeight);
+        x += 11;
+    }
+    stroke(0, 0, 0);
+};
+
 var drawStats = function () {
+    // Draws the area and perimeter stats and graphs.
     fill(255, 255, 255);
-    text("Perimeter: " + round(currentPerimeter) + " pixels", 10, height - 10);
-    text("Area: " + round(currentArea) + " sq. pixels", 10, height - 30);
+    textSize(12);
+    var x = 10;
+    var perimeterY = height - 10;
+    var areaY = height - 30;
+    text("Perimeter: " + round(currentPerimeter) + " pixels", x, perimeterY);
+    text("Area: " + round(currentArea) + " sq. pixels", x, areaY);
+    drawGraph(x + 130, areaY, areaData, maxArea);
+    drawGraph(x + 130, perimeterY, perimeterData, maxPerimeter);
+};
+
+var drawSnowFlake = function () {
+    // Draws the snowflake.
+    for (var i = 0; i < currentLines.length; i++) {
+        var l = currentLines[i];
+        drawLine(l);
+        l = rotateLineAboutCenter(l, tCenter, 120);
+        drawLine(l);
+        l = rotateLineAboutCenter(l, tCenter, 120);
+        drawLine(l);
+    }
 };
 
 var resetState = function () {
@@ -199,18 +243,23 @@ var resetState = function () {
     currentColorIndex = 1;
 };
 
-var draw = function () {
-    // Erases and draws our snowflake.  Called several times per second.
-    resetState();
-    stroke(0, 0, 0);
-
-    drawStats();
-    for (var i = 0; i < currentLines.length; i++) {
-        var l = currentLines[i];
-        drawLine(l);
-        l = rotateLineAboutCenter(l, tCenter, 120);
-        drawLine(l);
-        l = rotateLineAboutCenter(l, tCenter, 120);
-        drawLine(l);
+var mouseClicked = function () {
+    // On mouse click:
+    // Either make our snowflake more pointy, or reset to original.
+    level = (level + 1) % maxLevels;
+    if (level > 0) {
+        computeNextKochLevel();
+        updateStats();
+    } else {
+        resetStats();
     }
+    draw();
+};
+
+frameRate(1);
+var draw = function () {
+    // Main entrypoint.  Called once per second.
+    resetState();
+    drawSnowFlake();
+    drawStats();
 };
