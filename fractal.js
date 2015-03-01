@@ -56,7 +56,7 @@ var line1 = {
 var lines = [line1];
 var originalPerimeter = tSize * 3;
 var originalArea = 0.5 * tSize * baseHeightEquilateral(tSize);
-// There is no actual maximum perimeter, but this the max we will reach.
+// There is no actual maximum perimeter, but this is the max we will reach.
 var maxPerimeter = originalPerimeter * pow(4/3, maxLevels - 1);
 var maxArea = originalArea;
 for (var i = 1; i < maxLevels; i++) {
