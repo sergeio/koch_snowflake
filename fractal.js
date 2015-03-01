@@ -21,9 +21,9 @@
  * Author: Sergei O
  *****************************************************************************/
 
-var maxLevels = 6;
-var tSize = 200;  // <--- Try changing me to 400!
+var tSize = 200;   // <--- Try changing me to 400!
 var margin = 100;
+var maxLevels = 6; // <--- If things feel slow, change this to 5 or 4.
 
 var currentColorIndex = 0;
 var colors = [
