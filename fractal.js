@@ -1,6 +1,10 @@
  /*****************************************************************************
- * Visualization of the construction of the Koch Snowflake, one of the first
- * fractals to be described!
+ * Visualization of the construction of the Koch Snowflake, and the growth of
+ * its perimeter and area.
+ *
+ * Can be used to accompany this series:
+ * https://www.khanacademy.org/math/geometry/basic-geometry/koch_snowflake/v
+ * /koch-snowflake-fractal
  *
  * Every time you click on the snowflake, every line ____ is replaced by 4
  * lines representing the next level of the snowflake: _/\_.  After enough
@@ -15,7 +19,6 @@
  * Click to have fun.
  *
  * Author: Sergei O
- *
  *****************************************************************************/
 
 var maxLevels = 6;
