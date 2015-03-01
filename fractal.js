@@ -28,52 +28,45 @@ var baseHeightEquilateral = function (sideLength) {
 var tBase = baseHeightEquilateral(tSide);
 var tBaseLevel2 = baseHeightEquilateral(tSide / 3);
 var line1 = {
-    x1: margin,
-    y1: margin,
-    x2: margin + tSide,
-    y2: margin,
-    xNext: margin + tSide / 2,
-    yNext: margin - baseHeightEquilateral(tSide / 3),
+    p1: new PVector(margin, margin),
+    p2: new PVector(margin + tSide, margin),
+    pNext: new PVector( margin + tSide / 2, margin - baseHeightEquilateral(tSide / 3)),
     appearance: getNextColor(),
 };
 var lines = [line1];
 
-var triangleCenter = function (liney) {
-    // Get the center of our specific triangle.
+var triangleCenter = function () {
+    // Get the center of our specific triangle.  Depends on global state.
     // Could be used to inscribe a circle.
     // Will not work for every triangle.
-    var midX = (liney.x1 + liney.x2) / 2;
-    var midY = liney.y1 + tSide * sqrt(3) / 6;
-    return {x: midX, y: midY};
+    var midX = (line1.p1.x + line1.p2.x) / 2;
+    var midY = line1.p1.y + tSide * sqrt(3) / 6;
+    return new PVector(midX, midY);
 };
 
-var tCenter = triangleCenter(line1);
+var tCenter = triangleCenter();
 
-var myRotate = function (x1, y1, centerX, centerY, degrees) {
-    // Rotate the point (x1, y1) 120 degrees around (centerX, centerY)
-    x1 = x1 - centerX;
-    y1 = y1 - centerY;
-    var x2 = x1 * cos(degrees) - y1 * sin(degrees);
-    var y2 = x1 * sin(degrees) + y1 * cos(degrees);
-    x2 = x2 + centerX;
-    y2 = y2 + centerY;
-    return {x: x2, y: y2};
+var rotateAboutCenter = function (p, pCenter, degrees) {
+    // Rotate the point p around pCenter the specified amount of degrees.
+    // var pNew = p.get();
+    //
+    var pNew = new PVector(p.x, p.y);
+    pNew.sub(pCenter);
+    pNew.rotate(degrees);
+    pNew.add(pCenter);
+    return pNew;
 };
 
-var rotateLine = function (liney, center, degrees) {
+var rotateLineAboutCenter = function (liney, center, degrees) {
     // Rotate liney about the center of the triangle
     // Return a line object with fields x1, x2, y1, y2, xNext, yNext
-    var rotated1 = myRotate(liney.x1, liney.y1, center.x, center.y, degrees);
-    var rotated2 = myRotate(liney.x2, liney.y2, center.x, center.y, degrees);
-    var rotatedNext = myRotate(liney.xNext, liney.yNext, center.x, center.y, degrees);
     var rotatedLine = {
-        x1: rotated1.x, y1: rotated1.y,
-        x2: rotated2.x, y2: rotated2.y,
-        xNext: rotatedNext.x, yNext: rotatedNext.y,
+        p1: rotateAboutCenter(liney.p1, center, degrees),
+        p2: rotateAboutCenter(liney.p2, center, degrees),
+        pNext: rotateAboutCenter(liney.pNext, center, degrees),
         appearance: liney.appearance,
     };
     return rotatedLine;
-
 };
 
 var midpoint = function (p1, p2) {
@@ -83,72 +76,58 @@ var midpoint = function (p1, p2) {
 
 var getNextLevelKochLines = function (liney) {
     // Turn a line ____ into 4 segments _/\_ that are the next level Koch form.
-    var point1X = liney.x1 * 2 / 3 + liney.x2 / 3;
-    var point1Y = liney.y1 * 2 / 3 + liney.y2 / 3;
-    // Point2 is (liney.xNext, liney.yNext)
-    var point3X = liney.x1 / 3 + liney.x2 * 2 / 3;
-    var point3Y = liney.y1 / 3 + liney.y2 * 2 / 3;
+    var point1X = liney.p1.x * 2 / 3 + liney.p2.x / 3;
+    var point1Y = liney.p1.y * 2 / 3 + liney.p2.y / 3;
+    var newPoint1 = new PVector(point1X, point1Y);
+    // Point2 is liney.pNext
+    var point3X = liney.p1.x / 3 + liney.p2.x * 2 / 3;
+    var point3Y = liney.p1.y / 3 + liney.p2.y * 2 / 3;
+    var newPoint3 = new PVector(point3X, point3Y);
     var newColor = getNextColor();
 
     var segment1 = {
-        x1: liney.x1,
-        y1: liney.y1,
-        x2: point1X,
-        y2: point1Y,
+        p1: liney.p1,
+        p2: newPoint1,
         appearance: liney.appearance,
     };
-
     var segment2 = {
-        x1: segment1.x2,
-        y1: segment1.y2,
-        x2: liney.xNext,
-        y2: liney.yNext,
+        p1: segment1.p2,
+        p2: liney.pNext,
         appearance: newColor,
     };
     var segment3 = {
-        x1: segment2.x2,
-        y1: segment2.y2,
-        x2: point3X,
-        y2: point3Y,
+        p1: segment2.p2,
+        p2: newPoint3,
         appearance: newColor,
     };
     var segment4 = {
-        x1: segment3.x2,
-        y1: segment3.y2,
-        x2: liney.x2,
-        y2: liney.y2,
+        p1: segment3.p2,
+        p2: liney.p2,
         appearance: liney.appearance,
     };
 
-    var p1 = new PVector(liney.x1, liney.y1);
-    var p2 = new PVector(liney.x2, liney.y2);
-    var pp1 = new PVector(point1X, point1Y);
-    var pp3 = new PVector(point3X, point3Y);
-    var pNext = new PVector(liney.xNext, liney.yNext);
-
-    var midpointWholeLine = midpoint(p1, p2);
-    var vector = new PVector(pNext.x, pNext.y);
+    var midpointWholeLine = midpoint(liney.p1, liney.p2);
+    var vector = liney.pNext.get();
     vector.sub(midpointWholeLine);
     vector.div(3);
 
-    var pNextNew1 = midpoint(p1, pp1);
+    var pNextNew1 = midpoint(liney.p1, newPoint1);
     pNextNew1.add(vector);
-    var pNextNew4 = midpoint(p2, pp3);
+    var pNextNew4 = midpoint(liney.p2, newPoint3);
     pNextNew4.add(vector);
 
     vector.rotate(-60);
-    var pNextNew2 = midpoint(pp1, pNext);
+    var pNextNew2 = midpoint(newPoint1, liney.pNext);
     pNextNew2.add(vector);
 
     vector.rotate(120);
-    var pNextNew3 = midpoint(pNext, pp3);
+    var pNextNew3 = midpoint(liney.pNext, newPoint3);
     pNextNew3.add(vector);
 
     var segments = [segment1, segment2, segment3, segment4];
     var pNextNews = [pNextNew1, pNextNew2, pNextNew3, pNextNew4];
     for (var i = 0; i < segments.length; i++) {
-        segments[i].xNext = pNextNews[i].x;
-        segments[i].yNext = pNextNews[i].y;
+        segments[i].pNext = pNextNews[i];
     }
     return segments;
 };
@@ -176,7 +155,7 @@ mouseClicked = makeItMorePointy;
 var drawLine = function (liney) {
     // Draw the line `liney` with the correct color.
     stroke(liney.appearance);
-    line(liney.x1, liney.y1, liney.x2, liney.y2);
+    line(liney.p1.x, liney.p1.y, liney.p2.x, liney.p2.y);
     stroke(0, 0, 0);
 };
 
@@ -198,9 +177,9 @@ var draw = function () {
     for (var i = 0; i < currentLines.length; i++) {
         var l = currentLines[i];
         drawLine(l);
-        l = rotateLine(l, tCenter, 120);
+        l = rotateLineAboutCenter(l, tCenter, 120);
         drawLine(l);
-        l = rotateLine(l, tCenter, 120);
+        l = rotateLineAboutCenter(l, tCenter, 120);
         drawLine(l);
     }
 };
