@@ -9,10 +9,12 @@
  * Implementation note: we don't actually compute all the lines.  Instead, we
  * focus on just one third of the triangle (the top side), and then duplicate
  * and rotate it twice to draw the other two sides.  This turns out to be
- * tangibly faster on my machine.
+ * tangibly faster on my poor computer.  It's OK, computer; it'll be over soon.
  *
  * Controls:
  * Click to have fun.
+ *
+ * Author: Sergei O
  *
  *****************************************************************************/
 
@@ -233,6 +235,13 @@ var drawSnowFlake = function () {
     }
 };
 
+var drawInstructions = function () {
+    // Draws the area and perimeter stats and graphs.
+    fill(100, 100, 100);
+    textSize(12);
+    text("Try clicking! Try playing with the code!", 10, 20);
+};
+
 var resetState = function () {
     // Resets the state of the canvas and color index for next frame.
     noStroke();
@@ -260,6 +269,7 @@ frameRate(1);
 var draw = function () {
     // Main entrypoint.  Called once per second.
     resetState();
+    drawInstructions();
     drawSnowFlake();
     drawStats();
 };
