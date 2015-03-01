@@ -19,8 +19,8 @@
 frameRate(3);
 
 var maxLevels = 6;
+var tSize = 200;  // <--- Try changing me to 400!
 var margin = 100;
-var tSide = 200;
 
 var currentColorIndex = 0;
 var colors = [
@@ -43,22 +43,23 @@ var baseHeightEquilateral = function (sideLength) {
     return sqrt(3 / 4 * sideLength * sideLength);
 };
 
-var tBase = baseHeightEquilateral(tSide);
-var tBaseLevel2 = baseHeightEquilateral(tSide / 3);
+// The line that will be duplicated and rotated to make our initial triangle.
 var line1 = {
     p1: new PVector(margin, margin),
-    p2: new PVector(margin + tSide, margin),
-    pNext: new PVector( margin + tSide / 2, margin - baseHeightEquilateral(tSide / 3)),
+    p2: new PVector(margin + tSize, margin),
+    pNext: new PVector(margin + tSize / 2, margin - baseHeightEquilateral(tSize / 3)),
     appearance: getNextColor(),
 };
 var lines = [line1];
+var originalPerimeter = tSize * 3;
+var originalArea = 0.5 * tSize * baseHeightEquilateral(tSize);
 
 var triangleCenter = function () {
     // Get the center of our specific triangle.  Depends on global state.
     // Could be used to inscribe a circle.
     // Will not work for every triangle.
     var midX = (line1.p1.x + line1.p2.x) / 2;
-    var midY = line1.p1.y + tSide * sqrt(3) / 6;
+    var midY = line1.p1.y + tSize * sqrt(3) / 6;
     return new PVector(midX, midY);
 };
 
@@ -129,65 +130,63 @@ var getNextLevelKochLines = function (liney) {
     vector.sub(midpointWholeLine);
     vector.div(3);
 
-    var pNextNew1 = midpoint(liney.p1, newPoint1);
-    pNextNew1.add(vector);
-    var pNextNew4 = midpoint(liney.p2, newPoint3);
-    pNextNew4.add(vector);
+    segment1.pNext = midpoint(liney.p1, newPoint1);
+    segment1.pNext.add(vector);
+
+    segment4.pNext = midpoint(liney.p2, newPoint3);
+    segment4.pNext.add(vector);
 
     vector.rotate(-60);
-    var pNextNew2 = midpoint(newPoint1, liney.pNext);
-    pNextNew2.add(vector);
+    segment2.pNext = midpoint(newPoint1, liney.pNext);
+    segment2.pNext.add(vector);
 
     vector.rotate(120);
-    var pNextNew3 = midpoint(liney.pNext, newPoint3);
-    pNextNew3.add(vector);
+    segment3.pNext = midpoint(liney.pNext, newPoint3);
+    segment3.pNext.add(vector);
 
     var segments = [segment1, segment2, segment3, segment4];
-    var pNextNews = [pNextNew1, pNextNew2, pNextNew3, pNextNew4];
-    for (var i = 0; i < segments.length; i++) {
-        segments[i].pNext = pNextNews[i];
-    }
     return segments;
 };
 
 var currentLines = lines;
-var timesClicked = 0;
-var nextLevelLines = [];
-var calculatingNextLevel = false;
-var needToDraw = true;
+var level = 0;
+var currentPerimeter = originalPerimeter;
+var currentArea = originalArea;
 
 var computeNextKochLevel = function () {
-    calculatingNextLevel = true;
-    timesClicked = (timesClicked + 1) % maxLevels;
-    if (timesClicked > 0) {
-        nextLevelLines = [];
+    // Calculate the set of lines that will be shown next time the user clicks.
+    level = (level + 1) % maxLevels;
+    var nextLevelLines = [];
+    if (level > 0) {
         for (var i = 0; i < currentLines.length; i++) {
             var l = currentLines[i];
             var kochLines = getNextLevelKochLines(l);
             nextLevelLines.push.apply(nextLevelLines, kochLines);
         }
-    } else {
-        nextLevelLines = lines;
-    }
-    calculatingNextLevel = false;
-};
-computeNextKochLevel();
-
-var advanceToNextKochLevel = function () {
-    if (!calculatingNextLevel) {
         currentLines = nextLevelLines;
-        computeNextKochLevel();
-        needToDraw = true;
+        currentPerimeter = 4 * currentPerimeter / 3;
+        var newArea = 7 / 4 * pow(4 / 9, level) * originalArea;
+        currentArea = currentArea + newArea;
+    } else {
+        currentLines = lines;
+        currentPerimeter = originalPerimeter;
+        currentArea = originalArea;
     }
 };
 
-mouseClicked = advanceToNextKochLevel;
+mouseClicked = computeNextKochLevel;
 
 var drawLine = function (liney) {
     // Draw the line `liney` with the correct color.
     stroke(liney.appearance);
     line(liney.p1.x, liney.p1.y, liney.p2.x, liney.p2.y);
     stroke(0, 0, 0);
+};
+
+var drawStats = function () {
+    fill(255, 255, 255);
+    text("Perimeter: " + round(currentPerimeter) + " pixels", 10, height - 10);
+    text("Area: " + round(currentArea) + " sq. pixels", 10, height - 30);
 };
 
 var resetState = function () {
@@ -202,11 +201,10 @@ var resetState = function () {
 
 var draw = function () {
     // Erases and draws our snowflake.  Called several times per second.
-    if (!needToDraw) { return; }
-
     resetState();
     stroke(0, 0, 0);
 
+    drawStats();
     for (var i = 0; i < currentLines.length; i++) {
         var l = currentLines[i];
         drawLine(l);
@@ -215,5 +213,4 @@ var draw = function () {
         l = rotateLineAboutCenter(l, tCenter, 120);
         drawLine(l);
     }
-    needToDraw = false;
 };
