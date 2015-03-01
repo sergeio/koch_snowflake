@@ -1,4 +1,22 @@
-frameRate(10);
+ /*****************************************************************************
+ * Visualization of the construction of the Koch Snowflake, one of the first
+ * fractals to be described!
+ *
+ * Every time you click on the snowflake, every line ____ is replaced by 4
+ * lines representing the next level of the snowflake: _/\_.  After enough
+ * clicks, the snowflake is reset to the original starting triangle.
+ *
+ * Implementation note: we don't actually compute all the lines.  Instead, we
+ * focus on just one third of the triangle (the top side), and then duplicate
+ * and rotate it twice to draw the other two sides.  This turns out to be
+ * tangibly faster on my machine.
+ *
+ * Controls:
+ * Click to have fun.
+ *
+ *****************************************************************************/
+
+frameRate(3);
 
 var maxLevels = 6;
 var margin = 100;
