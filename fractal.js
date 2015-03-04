@@ -18,6 +18,8 @@
  * Controls:
  * Click to have fun.
  *
+ * Look for the word "Try" in the comments for examples of fun code to change!
+ *
  * Author: Sergei O
  *****************************************************************************/
 
@@ -70,7 +72,7 @@ var triangleCenter = function () {
     // Could be used to inscribe a circle.
     // Will not work for every triangle.
     var midX = (line1.p1.x + line1.p2.x) / 2;
-    var midY = line1.p1.y + tSize * sqrt(3) / 6;
+    var midY = line1.p1.y + tSize * sqrt(3) / 6;       // Try changing 6 to 54!
     return new PVector(midX, midY);
 };
 
@@ -147,11 +149,11 @@ var getNextLevelKochLines = function (liney) {
     segment4.pNext = midpoint(liney.p2, newPoint3);
     segment4.pNext.add(vector);
 
-    vector.rotate(-60);
+    vector.rotate(-60);   // Try changing -60 to -10 and then clicking a bunch!
     segment2.pNext = midpoint(newPoint1, liney.pNext);
     segment2.pNext.add(vector);
 
-    vector.rotate(120);
+    vector.rotate(120);   // Try changing 120 too!
     segment3.pNext = midpoint(liney.pNext, newPoint3);
     segment3.pNext.add(vector);
 
